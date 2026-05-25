@@ -7,13 +7,11 @@ app = Flask(__name__)
 swagger = Swagger(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tareas.db'
-...
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
 
-# Modelo de tarea
 class Tarea(db.Model):
     id          = db.Column(db.Integer, primary_key=True)
     titulo      = db.Column(db.String(200), nullable=False)
@@ -35,25 +33,64 @@ with app.app_context():
     db.create_all()
 
 
-# Obtener todas las tareas
 @app.route('/api/tareas', methods=['GET'])
 def get_tareas():
+    """
+    Obtener todas las tareas
+    ---
+    responses:
+      200:
+        description: Lista de tareas
+    """
     tareas = Tarea.query.all()
     return jsonify([t.to_dict() for t in tareas])
 
 
-# Obtener una tarea por id
 @app.route('/api/tareas/<int:id>', methods=['GET'])
 def get_tarea(id):
+    """
+    Obtener una tarea por ID
+    ---
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Tarea encontrada
+      404:
+        description: Tarea no encontrada
+    """
     tarea = Tarea.query.get(id)
     if tarea is None:
         return jsonify({'error': 'Tarea no encontrada'}), 404
     return jsonify(tarea.to_dict())
 
 
-# Crear una tarea
 @app.route('/api/tareas', methods=['POST'])
 def crear_tarea():
+    """
+    Crear una nueva tarea
+    ---
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          properties:
+            titulo:
+              type: string
+              example: Comprar leche
+            descripcion:
+              type: string
+              example: En el supermercado
+    responses:
+      201:
+        description: Tarea creada
+      400:
+        description: El titulo es obligatorio
+    """
     data = request.get_json()
 
     if not data or not data.get('titulo'):
@@ -68,9 +105,36 @@ def crear_tarea():
     return jsonify(nueva.to_dict()), 201
 
 
-# Actualizar una tarea
 @app.route('/api/tareas/<int:id>', methods=['PUT'])
 def actualizar_tarea(id):
+    """
+    Actualizar una tarea existente
+    ---
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+      - name: body
+        in: body
+        required: true
+        schema:
+          properties:
+            titulo:
+              type: string
+              example: Tarea actualizada
+            descripcion:
+              type: string
+              example: Nueva descripcion
+            completada:
+              type: boolean
+              example: true
+    responses:
+      200:
+        description: Tarea actualizada
+      404:
+        description: Tarea no encontrada
+    """
     tarea = Tarea.query.get(id)
     if tarea is None:
         return jsonify({'error': 'Tarea no encontrada'}), 404
@@ -83,9 +147,22 @@ def actualizar_tarea(id):
     return jsonify(tarea.to_dict())
 
 
-# Eliminar una tarea
 @app.route('/api/tareas/<int:id>', methods=['DELETE'])
 def eliminar_tarea(id):
+    """
+    Eliminar una tarea
+    ---
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Tarea eliminada
+      404:
+        description: Tarea no encontrada
+    """
     tarea = Tarea.query.get(id)
     if tarea is None:
         return jsonify({'error': 'Tarea no encontrada'}), 404
